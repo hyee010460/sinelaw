@@ -1,530 +1,683 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>餘弦定理 | 互動探索教具</title>
-    <!-- 引入 Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- 引入 Babel 讓瀏覽器即時編譯 JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- 引入字體 -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="透過互動操作，逐步探索餘弦定理的推導與應用。" />
+  <title>餘弦定理｜互動探索教具</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React and ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- JSX compiler -->
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', 'Noto Sans TC', sans-serif; }
+    .animate-fade-in { animation: fadeIn .35s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(7px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    select, input, button { font: inherit; }
+    button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 3px solid rgba(99, 102, 241, .35);
+      outline-offset: 2px;
+    }
+    /* Fraction display style */
+    .fraction {
+      display: inline-flex;
+      flex-direction: column;
+      vertical-align: middle;
+      text-align: center;
+      padding: 0 4px;
+    }
+    .fraction .num {
+      border-bottom: 2px solid currentColor;
+      padding-bottom: 2px;
+    }
+    .fraction .den {
+      padding-top: 2px;
+    }
+  </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased selection:bg-indigo-200">
+  <div id="root"></div>
 
-    <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+    const SuccessMessage = ({ children }) => (
+      <div className="mt-4 flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 font-medium text-emerald-800 animate-fade-in" role="status">
+        <span aria-hidden="true" className="text-lg">✓</span>
+        <span>{children}</span>
+      </div>
+    );
 
-        // --- Step 1: 建立坐標系 ---
-        const Step1 = () => {
-            const [bx, setBx] = useState('');
-            const [by, setBy] = useState('');
-            const [ax, setAx] = useState('');
-            const [ay, setAy] = useState('');
-            const [success, setSuccess] = useState(false);
+    const HintMessage = ({ children }) => (
+      <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 animate-fade-in" role="status">
+        <span aria-hidden="true" className="text-lg">↻</span>
+        <span>{children}</span>
+      </div>
+    );
 
-            useEffect(() => {
-                if (bx === 'a' && by === '0' && ax === 'b cos C' && ay === 'b sin C') {
-                    setSuccess(true);
-                } else {
-                    setSuccess(false);
-                }
-            }, [bx, by, ax, ay]);
+    const StepHeading = ({ number, children }) => (
+      <h2 className="mb-4 flex items-center text-2xl font-bold text-slate-800">
+        <span className="mr-3 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-lg text-indigo-700 shadow-sm">{number}</span>
+        {children}
+      </h2>
+    );
 
-            return (
-                <div className="flex flex-col md:flex-row gap-8 animate-fade-in">
-                    <div className="flex-1">
-                        <h2 className="text-2xl font-bold mb-4 text-slate-800 flex items-center">
-                            <span className="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center text-lg mr-3 shadow-sm">1</span>
-                            將三角形放入坐標系
-                        </h2>
-                        <p className="mb-4 text-slate-600 leading-relaxed">
-                            參考《泰宇 正餘弦定理.pdf》的推導方法，我們將 $\triangle ABC$ 的頂點 $C$ 放在原點 $(0,0)$，並將邊 $a$ ({"$\\overline{BC}$"}) 放在 $x$ 軸上。
-                        </p>
-                        <div className="bg-white border border-indigo-100 p-6 rounded-2xl mb-6 shadow-sm">
-                            <p className="font-semibold text-indigo-800 mb-4">請根據右圖，選出點 $A$ 和 $B$ 的坐標：</p>
-                            <div className="space-y-5">
-                                <div className="flex items-center gap-3">
-                                    <span className="font-bold text-slate-700 w-10 text-right">B = (</span>
-                                    <select value={bx} onChange={e => setBx(e.target.value)} className="border-2 border-slate-200 rounded-lg p-2 text-center focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-                                        <option value="">?</option>
-                                        <option value="a">a</option>
-                                        <option value="b">b</option>
-                                        <option value="c">c</option>
-                                    </select>
-                                    <span>,</span>
-                                    <select value={by} onChange={e => setBy(e.target.value)} className="border-2 border-slate-200 rounded-lg p-2 text-center focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-                                        <option value="">?</option>
-                                        <option value="0">0</option>
-                                        <option value="a">a</option>
-                                    </select>
-                                    <span className="font-bold text-slate-700">)</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="font-bold text-slate-700 w-10 text-right">A = (</span>
-                                    <select value={ax} onChange={e => setAx(e.target.value)} className="border-2 border-slate-200 rounded-lg p-2 text-center focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-                                        <option value="">?</option>
-                                        <option value="a cos C">a cos C</option>
-                                        <option value="b cos C">b cos C</option>
-                                        <option value="b sin C">b sin C</option>
-                                    </select>
-                                    <span>,</span>
-                                    <select value={ay} onChange={e => setAy(e.target.value)} className="border-2 border-slate-200 rounded-lg p-2 text-center focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-                                        <option value="">?</option>
-                                        <option value="a sin C">a sin C</option>
-                                        <option value="b cos C">b cos C</option>
-                                        <option value="b sin C">b sin C</option>
-                                    </select>
-                                    <span className="font-bold text-slate-700">)</span>
-                                    <span className="text-xs text-slate-400 ml-2">(利用極坐標概念)</span>
-                                </div>
-                            </div>
-                        </div>
-                        {success && (
-                            <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-4 rounded-xl flex items-center animate-fade-in font-medium">
-                                <svg className="w-6 h-6 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                完全正確！我們已經確定了三個頂點的坐標，請進入下一步。
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 flex justify-center items-center shadow-sm relative overflow-hidden">
-                        {/* 網格背景 */}
-                        <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-                        <svg viewBox="0 0 300 200" className="w-full max-w-sm relative z-10 drop-shadow-md">
-                            {/* 坐標軸 */}
-                            <line x1="20" y1="160" x2="280" y2="160" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow)" />
-                            <line x1="40" y1="180" x2="40" y2="20" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow)" />
-                            
-                            {/* 三角形 */}
-                            <polygon points="40,160 200,160 120,60" fill="rgba(79, 70, 229, 0.1)" stroke="#4f46e5" strokeWidth="2" strokeLinejoin="round" />
-                            
-                            {/* 頂點 */}
-                            <circle cx="40" cy="160" r="5" fill="#f43f5e" className="transition-all duration-300" />
-                            <text x="20" y="178" className="text-xs font-bold fill-slate-700">C(0,0)</text>
-                            
-                            <circle cx="200" cy="160" r="5" fill="#f43f5e" className={`transition-all duration-300 ${bx==='a'&&by==='0' ? 'scale-125' : ''}`} />
-                            <text x="185" y="178" className="text-xs font-bold fill-slate-700">B{bx==='a'&&by==='0' ? '(a,0)' : ''}</text>
-                            
-                            <circle cx="120" cy="60" r="5" fill="#f43f5e" className={`transition-all duration-300 ${ax==='b cos C'&&ay==='b sin C' ? 'scale-125' : ''}`} />
-                            <text x="80" y="45" className="text-xs font-bold fill-slate-700">A{ax==='b cos C'&&ay==='b sin C' ? '(b cos C, b sin C)' : ''}</text>
+    // Step 0: Pure thinking prompt without interactive buttons
+    const Step0 = () => {
+      return (
+        <div className="mx-auto max-w-4xl animate-fade-in py-2">
+          <StepHeading number="0">思考引導</StepHeading>
+          
+          <div className="grid gap-6 md:grid-cols-2 items-center mb-6">
+            <div className="rounded-2xl border-2 border-indigo-100 bg-white p-6 shadow-sm">
+              <p className="text-lg font-bold text-slate-800 mb-3">
+                如果我們已知 ΔABC 的兩邊長 a、b，以及其夾角 ∠C：
+              </p>
+              <p className="text-base leading-7 text-indigo-700 font-bold mb-4">
+                思考問題：你會用什麼方法求出第三邊 c 的長度呢？
+              </p>
+              <p className="text-sm text-slate-500 leading-6 border-t border-slate-100 pt-3">
+                💡 當夾角不是直角（無法直接套用畢氏定理）時，我們可以透過建立坐標系與兩點距離公式來推導出「餘弦定理」。
+              </p>
+            </div>
 
-                            {/* 邊長標示 */}
-                            <text x="120" y="150" className="text-sm fill-indigo-600 font-bold italic">a</text>
-                            <text x="65" y="105" className="text-sm fill-indigo-600 font-bold italic">b</text>
-                            <text x="170" y="105" className="text-sm fill-indigo-600 font-bold italic">c</text>
-                            
-                            {/* 角度 C */}
-                            <path d="M 65 160 A 25 25 0 0 0 55 140" fill="none" stroke="#f59e0b" strokeWidth="2"/>
-                            <text x="70" y="152" className="text-xs font-bold fill-amber-600">∠C</text>
+            <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="pointer-events-none absolute inset-0 opacity-20" style={{backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
+              <svg viewBox="0 0 300 200" className="relative z-10 w-full max-w-xs" role="img" aria-label="三角形 ABC 思考引導示意圖">
+                <polygon points="50,150 250,150 160,40" fill="rgba(79,70,229,.08)" stroke="#4f46e5" strokeWidth="2.5" strokeLinejoin="round" />
+                <circle cx="50" cy="150" r="4" fill="#334155" />
+                <circle cx="250" cy="150" r="4" fill="#334155" />
+                <circle cx="160" cy="40" r="4" fill="#334155" />
+                <text x="35" y="165" fontSize="12" fontWeight="700" fill="#334155">C</text>
+                <text x="255" y="165" fontSize="12" fontWeight="700" fill="#334155">B</text>
+                <text x="155" y="30" fontSize="12" fontWeight="700" fill="#334155">A</text>
+                <text x="100" y="95" fontSize="13" fontWeight="700" fill="#4f46e5">b</text>
+                <text x="215" y="95" fontSize="13" fontWeight="700" fill="#db2777">c = ?</text>
+                <text x="145" y="168" fontSize="13" fontWeight="700" fill="#4f46e5">a</text>
+                <path d="M 70 150 A 25 25 0 0 0 64 133" fill="none" stroke="#f59e0b" strokeWidth="2" />
+                <text x="76" y="142" fontSize="11" fontWeight="700" fill="#d97706">∠C</text>
+              </svg>
+            </div>
+          </div>
 
-                            <defs>
-                                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-                                    <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8" />
-                                </marker>
-                            </defs>
-                        </svg>
-                    </div>
+          <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-900 text-center font-medium">
+            請點擊下方「下一步」，讓我們一起開始建立坐標系推導吧！
+          </div>
+        </div>
+      );
+    };
+
+    // Step 1: Fixed display logic so selected coordinates show at the selected point (red or green)
+    const Step1 = () => {
+      const [bx, setBx] = useState('');
+      const [by, setBy] = useState('');
+      const [ax, setAx] = useState('');
+      const [ay, setAy] = useState('');
+
+      const bCorrect = bx === 'a' && by === '0';
+      const aCorrect = ax === 'b cos C' && ay === 'b sin C';
+      const allCorrect = bCorrect && aCorrect;
+      const answered = Boolean(bx && by && ax && ay);
+
+      const bHasChoice = bx !== '' && by !== '';
+      const bWrong = bHasChoice && !bCorrect;
+
+      const aHasChoice = ax !== '' && ay !== '';
+      const aWrong = aHasChoice && !aCorrect;
+
+      let wrongBX = 235, wrongBY = 175;
+      if (bx === 'a' && by === 'a') { wrongBX = 235; wrongBY = 70; }
+      else if (bx === 'b') { wrongBX = 140; wrongBY = 175; }
+      else if (bx === 'c') { wrongBX = 90; wrongBY = 175; }
+
+      let wrongAX = 140, wrongAY = 55;
+      if (ax === 'a cos C') { wrongAX = 190; wrongAY = 55; }
+      else if (ax === 'b sin C') { wrongAX = 85; wrongAY = 55; }
+      if (ay === 'a sin C') { wrongAY = 35; }
+      else if (ay === 'b cos C') { wrongAY = 115; }
+
+      const bChoiceText = bHasChoice ? `(${bx}, ${by})` : '';
+      const aChoiceText = aHasChoice ? `(${ax}, ${ay})` : '';
+
+      const selectClass = 'rounded-lg border-2 border-slate-200 bg-white p-2 text-center transition focus:border-indigo-500';
+
+      return (
+        <div className="grid gap-8 md:grid-cols-2 animate-fade-in">
+          <div>
+            <StepHeading number="1">將三角形放入坐標系</StepHeading>
+            <p className="mb-4 leading-7 text-slate-600">
+              將 △ABC 的頂點 C 放在原點 (0, 0)，並將邊 BC（長度為 a）放在 x 軸上。
+            </p>
+            <div className="mb-5 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm">
+              <p className="mb-4 font-semibold text-indigo-800">根據右圖，選出點 A 和點 B 的坐標。</p>
+              <div className="space-y-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="w-16 text-right font-bold">B = (</span>
+                  <select aria-label="點 B 的 x 座標" value={bx} onChange={e => setBx(e.target.value)} className={selectClass}>
+                    <option value="">選擇</option><option value="a">a</option><option value="b">b</option><option value="c">c</option>
+                  </select>
+                  <span>,</span>
+                  <select aria-label="點 B 的 y 座標" value={by} onChange={e => setBy(e.target.value)} className={selectClass}>
+                    <option value="">選擇</option><option value="0">0</option><option value="a">a</option>
+                  </select>
+                  <span>)</span>
                 </div>
-            );
-        }
-
-        // --- Step 2: 距離公式 ---
-        const Step2 = () => {
-            const [part1, setPart1] = useState('');
-            const [part2, setPart2] = useState('');
-            const isCorrect = part1 === 'b cos C' && part2 === 'b sin C';
-
-            return (
-                <div className="animate-fade-in max-w-5xl mx-auto">
-                    <div className="flex flex-col lg:flex-row gap-8">
-                        <div className="flex-1">
-                            <h2 className="text-2xl font-bold mb-4 text-slate-800 flex items-center">
-                                <span className="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center text-lg mr-3 shadow-sm">2</span>
-                                代入兩點距離公式
-                            </h2>
-                            <p className="mb-6 text-slate-600 leading-relaxed text-lg">
-                                我們已經知道點 <span className="font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">A(b cos C, b sin C)</span> 和點 <span className="font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">B(a, 0)</span>。<br/>
-                                現在利用距離公式：<code className="text-pink-600 bg-pink-50 px-2 rounded">距離² = (x₂ - x₁)² + (y₂ - y₁)²</code> 來求邊長 <strong className="text-slate-800">c</strong> 的平方。
-                            </p>
-                            <div className="bg-white border-2 border-indigo-100 p-6 rounded-2xl text-center mb-6 shadow-sm">
-                                <p className="mb-6 font-semibold text-slate-700 text-lg">請填寫缺少的 A 點坐標：</p>
-                                <div className="flex flex-wrap justify-center items-center gap-3 text-lg md:text-xl font-mono text-slate-800">
-                                    <span>c² = (</span>
-                                    <select value={part1} onChange={e => setPart1(e.target.value)} className="border-b-2 border-indigo-400 bg-indigo-50 rounded px-1 py-1 outline-none focus:border-indigo-600 focus:bg-indigo-100 transition-colors appearance-none text-center min-w-[100px]">
-                                        <option value="">?</option>
-                                        <option value="a">a</option>
-                                        <option value="b cos C">b cos C</option>
-                                        <option value="b sin C">b sin C</option>
-                                    </select>
-                                    <span>- a )² + (</span>
-                                    <select value={part2} onChange={e => setPart2(e.target.value)} className="border-b-2 border-indigo-400 bg-indigo-50 rounded px-1 py-1 outline-none focus:border-indigo-600 focus:bg-indigo-100 transition-colors appearance-none text-center min-w-[100px]">
-                                        <option value="">?</option>
-                                        <option value="a">a</option>
-                                        <option value="b cos C">b cos C</option>
-                                        <option value="b sin C">b sin C</option>
-                                    </select>
-                                    <span>- 0 )²</span>
-                                </div>
-                            </div>
-                            {isCorrect && (
-                                <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-4 rounded-xl flex items-center animate-fade-in font-medium shadow-sm">
-                                    <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    做得好！我們成功列出了方程式，接下來需要將它展開。
-                                </div>
-                            )}
-                        </div>
-                        
-                        {/* 第 2 步輔助圖區塊 */}
-                        <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-6 flex justify-center items-center shadow-sm relative overflow-hidden">
-                            <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-                            <svg viewBox="0 0 300 200" className="w-full max-w-sm relative z-10 drop-shadow-md">
-                                {/* 坐標軸 */}
-                                <line x1="20" y1="160" x2="280" y2="160" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow)" />
-                                <line x1="40" y1="180" x2="40" y2="20" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow)" />
-                                
-                                {/* 為了和 Step 1 連結，保留原三角形的淡淡輪廓 */}
-                                <polygon points="40,160 200,160 120,60" fill="rgba(79, 70, 229, 0.05)" stroke="#c7d2fe" strokeWidth="2" strokeLinejoin="round" />
-                                
-                                {/* A點投影到 x 軸的高 (b sin C) */}
-                                <line x1="120" y1="60" x2="120" y2="160" stroke="#6366f1" strokeWidth="2" strokeDasharray="4,4" />
-                                <text x="70" y="115" className="text-xs fill-indigo-500 font-medium">b sin C</text>
-                                
-                                {/* 直角記號 */}
-                                <rect x="120" y="150" width="10" height="10" fill="none" stroke="#6366f1" strokeWidth="1.5" />
-
-                                {/* 兩點連線 (邊長 c) */}
-                                <line x1="120" y1="60" x2="200" y2="160" stroke="#ec4899" strokeWidth="3" />
-                                <text x="165" y="105" className="text-sm fill-pink-600 font-bold italic">c</text>
-
-                                {/* 底部線段標示 (拆解 a) */}
-                                {/* C 到 投影點 */}
-                                <path d="M 40 165 L 40 170 L 120 170 L 120 165" fill="none" stroke="#94a3b8" strokeWidth="1" />
-                                <text x="60" y="182" className="text-[10px] fill-slate-500">b cos C</text>
-                                
-                                {/* 投影點 到 B */}
-                                <path d="M 120 165 L 120 170 L 200 170 L 200 165" fill="none" stroke="#6366f1" strokeWidth="1.5" />
-                                <text x="135" y="182" className="text-[10px] font-bold fill-indigo-600">a - b cos C</text>
-
-                                {/* 頂點與坐標文字 */}
-                                <circle cx="200" cy="160" r="5" fill="#f43f5e" />
-                                <text x="210" y="155" className="text-xs font-bold fill-slate-700">B(a, 0)</text>
-                                
-                                <circle cx="120" cy="60" r="5" fill="#f43f5e" />
-                                <text x="110" y="45" className="text-xs font-bold fill-slate-700">A(b cos C, b sin C)</text>
-
-                                <circle cx="40" cy="160" r="4" fill="#94a3b8" />
-                                <text x="25" y="155" className="text-xs fill-slate-500">C(0,0)</text>
-
-                                <defs>
-                                    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-                                        <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8" />
-                                    </marker>
-                                </defs>
-                            </svg>
-                        </div>
-                    </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="w-16 text-right font-bold">A = (</span>
+                  <select aria-label="點 A 的 x 座標" value={ax} onChange={e => setAx(e.target.value)} className={selectClass}>
+                    <option value="">選擇</option><option value="a cos C">a cos C</option><option value="b cos C">b cos C</option><option value="b sin C">b sin C</option>
+                  </select>
+                  <span>,</span>
+                  <select aria-label="點 A 的 y 座標" value={ay} onChange={e => setAy(e.target.value)} className={selectClass}>
+                    <option value="">選擇</option><option value="a sin C">a sin C</option><option value="b cos C">b cos C</option><option value="b sin C">b sin C</option>
+                  </select>
+                  <span>)</span>
                 </div>
-            );
-        }
+              </div>
+              <p className="mt-4 text-sm text-slate-500">提示：點 A 到原點 C 的距離是 b，而 CA 與正 x 軸的夾角是 C。</p>
+              {answered && (allCorrect
+                ? <SuccessMessage>完全正確！B = (a, 0)，A = (b cos C, b sin C)。</SuccessMessage>
+                : <HintMessage>⚠️ 注意右圖：紅點代表你選錯的坐標，它沒有落在正確的頂點上！</HintMessage>)}
+            </div>
+          </div>
 
-        // --- Step 3: 展開與化簡 ---
-        const Step3 = () => {
-            const [ans, setAns] = useState('');
-            const isCorrect = ans === '1';
+          <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="pointer-events-none absolute inset-0 opacity-20" style={{backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
+            <svg viewBox="0 0 320 220" className="relative z-10 w-full max-w-sm" role="img" aria-label="三角形 ABC 的坐標示意圖">
+              <defs><marker id="arrow-step1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#94a3b8" /></marker></defs>
+              <line x1="20" y1="175" x2="295" y2="175" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow-step1)" />
+              <line x1="45" y1="200" x2="45" y2="18" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow-step1)" />
+              
+              <polygon points="45,175 235,175 140,55" fill="rgba(79,70,229,.10)" stroke="#4f46e5" strokeWidth="2.5" strokeLinejoin="round" />
+              
+              <circle cx="45" cy="175" r="5" fill="#f43f5e" />
+              <text x="15" y="194" fontSize="11" fontWeight="700" fill="#334155">C (0, 0)</text>
 
-            return (
-                <div className="animate-fade-in max-w-4xl mx-auto">
-                    <h2 className="text-2xl font-bold mb-4 text-slate-800 flex items-center">
-                        <span className="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center text-lg mr-3 shadow-sm">3</span>
-                        展開與化簡
-                    </h2>
-                    <p className="mb-6 text-slate-600 text-lg">現在，讓我們一步步將剛才列出的距離公式展開並化簡：</p>
-                    
-                    <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl mb-8 shadow-sm text-base md:text-lg">
-                        {/* 初始狀態 */}
-                        <div className="text-center font-mono mb-8">
-                            <p className="mb-3 text-slate-400 font-sans text-sm font-bold tracking-widest">初始方程式</p>
-                            <p className="text-xl">c² = <span className="text-slate-600 bg-slate-50 px-2 py-1 rounded">(b cos C - a)² + (b sin C)²</span></p>
-                        </div>
+              <circle cx="140" cy="55" r="5" fill={aCorrect ? '#059669' : '#f43f5e'} />
+              <text x="135" y="38" fontSize="11" fontWeight="700" fill="#334155">
+                {aCorrect ? `A ${aChoiceText}` : 'A'}
+              </text>
 
-                        {/* 展開與提公因式 */}
-                        <div className="border-t border-slate-100 pt-8 mt-6 relative">
-                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white px-4 text-indigo-500 text-xs font-bold tracking-widest uppercase">展開與提公因式</div>
-                            <div className="text-center font-mono space-y-4 text-slate-700 text-lg">
-                                <p>c² = b² cos² C - 2ab cos C + a² + b² sin² C</p>
-                                <p>c² = a² + b² ( <span className="text-indigo-600 font-bold">cos² C + sin² C</span> ) - 2ab cos C</p>
-                            </div>
-                        </div>
+              {aWrong && (
+                <g className="animate-fade-in">
+                  <line x1="140" y1="55" x2={wrongAX} y2={wrongAY} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3,3" />
+                  <circle cx={wrongAX} cy={wrongAY} r="6" fill="#ef4444" />
+                  <text x={wrongAX + 10} y={wrongAY - 4} fontSize="11" fontWeight="700" fill="#ef4444">選錯的 A {aChoiceText}</text>
+                </g>
+              )}
 
-                        {/* 任務：三角恆等式 */}
-                        <div className="border-t border-slate-100 pt-8 mt-8 relative animate-fade-in">
-                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-white px-4 text-pink-500 text-xs font-bold tracking-widest uppercase">套用三角恆等式</div>
-                            <p className="font-medium text-slate-600 mb-4 text-center text-sm">根據畢氏定理，括號內的平方和等於多少？</p>
-                            <div className="flex justify-center items-center gap-4 text-xl">
-                                <span className="font-mono text-indigo-900">cos² C + sin² C = </span>
-                                <input 
-                                    type="text" 
-                                    value={ans} 
-                                    onChange={e => setAns(e.target.value.trim())} 
-                                    disabled={isCorrect}
-                                    className={`border-2 rounded-lg p-2 w-20 text-center font-bold outline-none transition-all shadow-sm ${isCorrect ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-pink-300 focus:ring-4 focus:ring-pink-100'}`} 
-                                    placeholder="?" 
-                                />
-                            </div>
-                        </div>
-                    </div>
+              <circle cx="235" cy="175" r="5" fill={bCorrect ? '#059669' : '#f43f5e'} />
+              <text x="225" y="195" fontSize="12" fontWeight="700" fill="#334155">
+                {bCorrect ? `B ${bChoiceText}` : 'B'}
+              </text>
 
-                    {isCorrect && (
-                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 p-8 rounded-2xl animate-fade-in text-center shadow-md">
-                            <h3 className="text-xl font-bold mb-4 text-emerald-800">🎉 完美推導完成！</h3>
-                            <p className="mb-6 text-slate-700">我們把 1 代入式子中，得到了最終的<strong>餘弦定理</strong>公式：</p>
-                            <div className="text-2xl md:text-3xl font-bold text-indigo-700 bg-white inline-block px-8 py-4 rounded-xl shadow-sm border-2 border-indigo-100 font-mono tracking-wide transform hover:scale-105 transition-transform">
-                                c² = a² + b² - 2ab cos C
-                            </div>
-                            <p className="mt-6 text-sm text-slate-500 bg-white/50 inline-block px-4 py-2 rounded-full">發現了嗎？當 ∠C = 90° (cos 90° = 0) 時，它就會退化成畢氏定理！</p>
-                        </div>
-                    )}
+              {bWrong && (
+                <g className="animate-fade-in">
+                  <line x1="235" y1="175" x2={wrongBX} y2={wrongBY} stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3,3" />
+                  <circle cx={wrongBX} cy={wrongBY} r="6" fill="#ef4444" />
+                  <text x={wrongBX + 10} y={wrongBY + 4} fontSize="11" fontWeight="700" fill="#ef4444">選錯的 B {bChoiceText}</text>
+                </g>
+              )}
+
+              <text x="137" y="165" fontSize="14" fontWeight="700" fill="#4f46e5">a</text>
+              <text x="74" y="107" fontSize="14" fontWeight="700" fill="#4f46e5">b</text>
+              <text x="190" y="107" fontSize="14" fontWeight="700" fill="#db2777">c</text>
+              <path d="M 72 175 A 27 27 0 0 0 66 158" fill="none" stroke="#f59e0b" strokeWidth="2" />
+              <text x="78" y="164" fontSize="12" fontWeight="700" fill="#d97706">∠C</text>
+            </svg>
+          </div>
+        </div>
+      );
+    };
+
+    // Step 2: use the distance formula.
+    const Step2 = () => {
+      const [part1, setPart1] = useState('');
+      const [part2, setPart2] = useState('');
+      const answered = Boolean(part1 && part2);
+      const correct = part1 === 'b cos C' && part2 === 'b sin C';
+      const selectClass = 'min-w-[110px] rounded border-b-2 border-indigo-400 bg-indigo-50 px-2 py-1.5 text-center outline-none focus:bg-indigo-100 text-sm md:text-base';
+
+      return (
+        <div className="mx-auto max-w-5xl animate-fade-in">
+          <StepHeading number="2">代入兩點距離公式</StepHeading>
+          <p className="mb-6 text-lg leading-7 text-slate-600">
+            已知 A = (b cos C, b sin C)，B = (a, 0)。利用兩點距離公式「距離² = (x₂ − x₁)² + (y₂ − y₁)²」，求邊長 c 的平方。
+          </p>
+          <div className="grid gap-8 lg:grid-cols-2 items-center">
+            <div>
+              <div className="rounded-2xl border-2 border-indigo-100 bg-white p-6 text-center shadow-sm">
+                <p className="mb-5 font-semibold text-slate-700">將點 A 的坐標代入距離公式。</p>
+                <div className="overflow-x-auto py-2">
+                  <div className="inline-flex whitespace-nowrap items-center justify-center gap-1.5 font-mono text-base md:text-lg text-slate-800">
+                    <span>c² = (</span>
+                    <select aria-label="距離公式中的水平坐標" value={part1} onChange={e => setPart1(e.target.value)} className={selectClass}>
+                      <option value="">選擇</option><option value="a">a</option><option value="b cos C">b cos C</option><option value="b sin C">b sin C</option>
+                    </select>
+                    <span>− a)² + (</span>
+                    <select aria-label="距離公式中的垂直坐標" value={part2} onChange={e => setPart2(e.target.value)} className={selectClass}>
+                      <option value="">選擇</option><option value="a">a</option><option value="b cos C">b cos C</option><option value="b sin C">b sin C</option>
+                    </select>
+                    <span>− 0)²</span>
+                  </div>
                 </div>
-            );
-        }
+                {answered && (correct
+                  ? <SuccessMessage>正確！因此 c² = (b cos C − a)² + (b sin C)²。</SuccessMessage>
+                  : <HintMessage>再想一想：x 座標要放在第一個平方項，y 座標要放在第二個平方項。</HintMessage>)}
+              </div>
+              <div className="mt-5 rounded-xl bg-indigo-50 p-4 text-sm leading-6 text-indigo-900">
+                <strong>思考：</strong>為什麼第二個平方項可以寫成 (b sin C)²？因為點 B 的 y 座標是 0。
+              </div>
+            </div>
+            <div className="relative flex items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="pointer-events-none absolute inset-0 opacity-20" style={{backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
+              <svg viewBox="0 0 320 220" className="relative z-10 w-full max-w-sm" role="img" aria-label="兩點 A 與 B 的坐標與距離示意圖">
+                <defs><marker id="arrow-step2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#94a3b8" /></marker></defs>
+                <line x1="20" y1="175" x2="295" y2="175" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow-step2)" />
+                <line x1="45" y1="200" x2="45" y2="18" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrow-step2)" />
+                <polygon points="45,175 235,175 140,55" fill="rgba(79,70,229,.05)" stroke="#c7d2fe" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="4,4" />
+                <line x1="140" y1="55" x2="235" y2="175" stroke="#ec4899" strokeWidth="3" />
+                <circle cx="45" cy="175" r="4" fill="#94a3b8" /><circle cx="235" cy="175" r="5" fill="#f43f5e" /><circle cx="140" cy="55" r="5" fill="#f43f5e" />
+                <text x="14" y="194" fontSize="10" fill="#64748b">C (0, 0)</text>
+                <text x="215" y="194" fontSize="11" fontWeight="700" fill="#334155">B (a, 0)</text>
+                <text x="90" y="42" fontSize="10" fontWeight="700" fill="#334155">A (b cos C, b sin C)</text>
+                <text x="175" y="105" fontSize="13" fontWeight="700" fill="#db2777">c</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      );
+    };
 
-        // --- Step 4: 互動習題 ---
-        const Step4 = () => {
-            const [ex1Ans, setEx1Ans] = useState('');
-            const ex1Correct = ex1Ans === '12';
+    // Step 3: expand and simplify (Relaxed input validation)
+    const Step3 = () => {
+      const [ans, setAns] = useState('');
+      const cleanAns = ans.trim().toLowerCase();
+      const answered = cleanAns !== '';
+      const correct = cleanAns === '1' || cleanAns === '1.0';
 
-            const [ex2Ans, setEx2Ans] = useState('');
-            const ex2Correct = ex2Ans === '120';
+      return (
+        <div className="mx-auto max-w-4xl animate-fade-in">
+          <StepHeading number="3">展開與化簡</StepHeading>
+          <p className="mb-6 text-lg leading-7 text-slate-600">接著將距離公式展開，並利用三角恆等式化簡。</p>
+          <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+            <div className="mb-7 text-center font-mono">
+              <p className="mb-3 font-sans text-xs font-bold tracking-widest text-slate-400">初始方程式</p>
+              <p className="break-words text-lg md:text-xl">c² = (b cos C − a)² + (b sin C)²</p>
+            </div>
+            <div className="relative mt-6 border-t border-slate-100 pt-7">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-4 text-xs font-bold tracking-widest text-indigo-500">展開與整理</div>
+              <div className="space-y-4 break-words text-center font-mono text-base text-slate-700 md:text-lg">
+                <p>c² = b² cos² C − 2ab cos C + a² + b² sin² C</p>
+                <p>c² = a² + b²(cos² C + sin² C) − 2ab cos C</p>
+              </div>
+            </div>
+            <div className="relative mt-8 border-t border-slate-100 pt-7">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white px-4 text-xs font-bold tracking-widest text-pink-500">套用三角恆等式</div>
+              <p className="mb-4 text-center text-sm leading-6 text-slate-600">基本三角恆等式告訴我們：cos² C + sin² C = 多少？</p>
+              <div className="flex flex-wrap items-center justify-center gap-3 text-xl">
+                <label htmlFor="identity-answer" className="font-mono text-indigo-900">cos² C + sin² C =</label>
+                <input id="identity-answer" type="text" value={ans} onChange={e => setAns(e.target.value)} disabled={correct} className={`w-20 rounded-lg border-2 p-2 text-center font-bold shadow-sm outline-none ${correct ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-pink-300 focus:border-pink-500'}`} placeholder="?" />
+              </div>
+              {answered && (correct
+                ? <SuccessMessage>正確！將 cos² C + sin² C = 1 代入，就能得到餘弦定理。</SuccessMessage>
+                : <HintMessage>再檢查一次：對任何角 C，都有 sin² C + cos² C = 1。</HintMessage>)}
+            </div>
+          </div>
+          {correct && (
+            <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-7 text-center shadow-sm animate-fade-in">
+              <h3 className="mb-3 text-xl font-bold text-emerald-800">推導完成！</h3>
+              <p className="mb-5 leading-7 text-slate-700">我們得到餘弦定理：</p>
+              <div className="inline-block rounded-xl border-2 border-indigo-100 bg-white px-5 py-4 font-mono text-xl font-bold text-indigo-700 shadow-sm md:px-8 md:text-3xl">c² = a² + b² − 2ab cos C</div>
+              <p className="mt-5 text-sm leading-6 text-slate-600">當 ∠C = 90° 時，cos 90° = 0，因此 c² = a² + b²，便得到畢氏定理。</p>
+            </div>
+          )}
+        </div>
+      );
+    };
 
-            return (
-                <div className="animate-fade-in">
-                    <h2 className="text-2xl font-bold mb-4 text-slate-800 flex items-center">
-                        <span className="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center text-lg mr-3 shadow-sm">4</span>
-                        概念穩固 (互動習題)
-                    </h2>
-                    <div className="mb-8 text-slate-600 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
-                        <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600 mt-1">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path></svg>
-                        </div>
-                        <div>
-                            <p className="font-semibold text-slate-800 mb-1">公式變形提醒</p>
-                            <p className="text-sm">公式可依照需求變換符號位置：<br/>
-                            求邊長：<code className="bg-slate-100 px-2 py-0.5 rounded font-mono text-pink-600 mx-1">b² = a² + c² - 2ac cos B</code><br/>
-                            求角度：<code className="bg-slate-100 px-2 py-0.5 rounded font-mono text-indigo-600 mx-1">cos A = (b² + c² - a²) / 2bc</code></p>
-                        </div>
-                    </div>
+    // Step 4: Formated with proper \frac fractional presentation
+    const Step4 = () => {
+      const [step2Choice, setStep2Choice] = useState('');
+      const [step3Choice, setStep3Choice] = useState('');
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {/* Exercise 1 */}
-                        <div className={`p-6 rounded-2xl border-2 transition-all duration-300 ${ex1Correct ? 'border-emerald-400 bg-emerald-50 shadow-md' : 'border-slate-200 bg-white shadow-sm hover:shadow-md'}`}>
-                            <h3 className="font-bold text-lg mb-4 flex items-center text-slate-800">
-                                <span className="bg-sky-500 text-white w-6 h-6 rounded-md flex items-center justify-center text-sm mr-3">A</span>
-                                已知兩邊一夾角 (SAS)
-                            </h3>
-                            <div className="flex flex-col xl:flex-row gap-4 mb-5">
-                                <div className="flex-1">
-                                    <p className="text-slate-600 mb-4 text-sm leading-relaxed border-l-4 border-sky-300 pl-3">
-                                        <span className="text-xs text-sky-600 font-bold block mb-1">出自課本動動筆4</span>
-                                        $\triangle ABC$ 中，已知 $c = 2$，$a = 4$，且 $\angle B = 60^\circ$。<br/>
-                                        求 <strong className="text-slate-800">b²</strong> 的值？<br/>
-                                        <span className="text-xs text-slate-400 mt-1 inline-block">(提示：$\cos 60^\circ = 0.5$)</span>
-                                    </p>
-                                    <div className="bg-slate-50 p-4 rounded-xl text-sm font-mono text-slate-500 border border-slate-100">
-                                        b² = a² + c² - 2ac cos B<br/>
-                                        b² = 4² + 2² - 2(4)(2)(0.5)
-                                    </div>
-                                </div>
-                                {/* 習題 A 輔助圖 */}
-                                <div className="w-full xl:w-1/3 bg-slate-50 rounded-xl flex items-center justify-center p-3 border border-slate-100">
-                                    <svg viewBox="0 0 160 120" className="w-full h-auto max-w-[140px] drop-shadow-sm">
-                                        <polygon points="20,100 50,48 140,100" fill="rgba(14, 165, 233, 0.1)" stroke="#0ea5e9" strokeWidth="2" strokeLinejoin="round" />
-                                        <path d="M 35 100 A 15 15 0 0 0 28 87" fill="none" stroke="#0ea5e9" strokeWidth="2"/>
-                                        <text x="35" y="93" className="text-[10px] font-bold fill-sky-700">60°</text>
-                                        <text x="8" y="110" className="text-xs font-bold fill-slate-700">B</text>
-                                        <text x="45" y="40" className="text-xs font-bold fill-slate-700">A</text>
-                                        <text x="145" y="110" className="text-xs font-bold fill-slate-700">C</text>
-                                        <text x="20" y="70" className="text-[10px] font-bold fill-sky-600">c=2</text>
-                                        <text x="75" y="115" className="text-[10px] font-bold fill-sky-600">a=4</text>
-                                        <text x="95" y="65" className="text-[10px] font-bold fill-pink-500">b=?</text>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="font-bold text-slate-700 text-lg">b² = </span>
-                                <input 
-                                    type="number" 
-                                    value={ex1Ans} 
-                                    onChange={e => setEx1Ans(e.target.value)} 
-                                    className="border-2 border-slate-300 rounded-lg p-2 w-24 focus:ring-2 focus:ring-sky-500 outline-none text-center font-bold text-slate-800" 
-                                    placeholder="?" 
-                                />
-                                {ex1Correct && <span className="text-emerald-600 font-bold animate-fade-in flex items-center"><svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg> 正確 (b=2√3)</span>}
-                            </div>
-                        </div>
+      const step2Correct = step2Choice === '2bc_cosA';
+      const step3Correct = step3Choice === 'divided_by_2bc';
 
-                        {/* Exercise 2 */}
-                        <div className={`p-6 rounded-2xl border-2 transition-all duration-300 ${ex2Correct ? 'border-emerald-400 bg-emerald-50 shadow-md' : 'border-slate-200 bg-white shadow-sm hover:shadow-md'}`}>
-                            <h3 className="font-bold text-lg mb-4 flex items-center text-slate-800">
-                                <span className="bg-pink-500 text-white w-6 h-6 rounded-md flex items-center justify-center text-sm mr-3">B</span>
-                                已知三邊長求角度 (SSS)
-                            </h3>
-                            <div className="flex flex-col xl:flex-row gap-4 mb-5">
-                                <div className="flex-1">
-                                    <p className="text-slate-600 mb-4 text-sm leading-relaxed border-l-4 border-pink-300 pl-3">
-                                        <span className="text-xs text-pink-600 font-bold block mb-1">出自課本例題6</span>
-                                        $\triangle ABC$ 中，已知邊長 $a = 7$，$b = 5$，$c = 3$。<br/>
-                                        求最大角 <strong className="text-slate-800">$\angle A$</strong> 的度數？
-                                    </p>
-                                    <div className="bg-slate-50 p-4 rounded-xl text-sm font-mono text-slate-500 border border-slate-100">
-                                        cos A = (b² + c² - a²) / 2bc<br/>
-                                        cos A = (5² + 3² - 7²) / 2(5)(3)<br/>
-                                        cos A = -0.5
-                                    </div>
-                                </div>
-                                {/* 習題 B 輔助圖 */}
-                                <div className="w-full xl:w-1/3 bg-slate-50 rounded-xl flex items-center justify-center p-3 border border-slate-100">
-                                    <svg viewBox="0 0 160 120" className="w-full h-auto max-w-[140px] drop-shadow-sm">
-                                        <polygon points="30,100 130,100 63,73.6" fill="rgba(236, 72, 153, 0.1)" stroke="#ec4899" strokeWidth="2" strokeLinejoin="round" />
-                                        <path d="M 54 75 A 12 12 0 0 1 73 78" fill="none" stroke="#ec4899" strokeWidth="2"/>
-                                        <text x="61" y="93" className="text-[10px] font-bold fill-pink-600">A=?</text>
-                                        <text x="18" y="110" className="text-xs font-bold fill-slate-700">B</text>
-                                        <text x="135" y="110" className="text-xs font-bold fill-slate-700">C</text>
-                                        <text x="58" y="65" className="text-xs font-bold fill-slate-700">A</text>
-                                        <text x="40" y="82" className="text-[10px] font-bold fill-slate-600">c=3</text>
-                                        <text x="95" y="82" className="text-[10px] font-bold fill-slate-600">b=5</text>
-                                        <text x="80" y="115" className="text-[10px] font-bold fill-slate-600">a=7</text>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="font-bold text-slate-700 text-lg">b² = </span>
-                                <input 
-                                    type="number" 
-                                    value={ex1Ans} 
-                                    onChange={e => setEx1Ans(e.target.value)} 
-                                    className="border-2 border-slate-300 rounded-lg p-2 w-24 focus:ring-2 focus:ring-sky-500 outline-none text-center font-bold text-slate-800" 
-                                    placeholder="?" 
-                                />
-                                {ex1Correct && <span className="text-emerald-600 font-bold animate-fade-in flex items-center"><svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg> 正確 (b=2√3)</span>}
-                            </div>
-                        </div>
+      return (
+        <div className="mx-auto max-w-4xl animate-fade-in">
+          <StepHeading number="4">公式變形與推導</StepHeading>
+          <p className="mb-6 text-lg leading-7 text-slate-600">
+            已知餘弦定理為 <span className="font-mono font-semibold text-indigo-700">c² = a² + b² − 2ab cos C</span>。如果我們想從三邊長求出夾角 <span className="font-mono font-semibold text-pink-600">A</span>，該怎麼一步步推導出 <span className="font-mono font-semibold text-pink-600">cos A</span> 的公式呢？請試著自己回答以下步驟：
+          </p>
 
-                        {/* Exercise 2 */}
-                        <div className={`p-6 rounded-2xl border-2 transition-all duration-300 ${ex2Correct ? 'border-emerald-400 bg-emerald-50 shadow-md' : 'border-slate-200 bg-white shadow-sm hover:shadow-md'}`}>
-                            <h3 className="font-bold text-lg mb-4 flex items-center text-slate-800">
-                                <span className="bg-pink-500 text-white w-6 h-6 rounded-md flex items-center justify-center text-sm mr-3">B</span>
-                                已知三邊長求角度 (SSS)
-                            </h3>
-                            <p className="text-slate-600 mb-4 text-sm leading-relaxed border-l-4 border-pink-300 pl-3">
-                                <span className="text-xs text-pink-600 font-bold block mb-1">出自課本例題6</span>
-                                $\triangle ABC$ 中，已知邊長 $a = 7$，$b = 5$，$c = 3$。<br/>
-                                求最大角 <strong className="text-slate-800">$\angle A$</strong> 的度數？
-                            </p>
-                            <div className="bg-slate-50 p-4 rounded-xl text-sm font-mono mb-5 text-slate-500 border border-slate-100">
-                                cos A = (b² + c² - a²) / 2bc<br/>
-                                cos A = (5² + 3² - 7²) / 2(5)(3)<br/>
-                                cos A = -0.5
-                            </div>
-                            <div className="flex flex-wrap items-center gap-3">
-                                <span className="font-bold text-slate-700 text-lg">∠A = </span>
-                                <input 
-                                    type="number" 
-                                    value={ex2Ans} 
-                                    onChange={e => setEx2Ans(e.target.value)} 
-                                    className="border-2 border-slate-300 rounded-lg p-2 w-24 focus:ring-2 focus:ring-pink-500 outline-none text-center font-bold text-slate-800" 
-                                    placeholder="?" 
-                                />
-                                <span className="text-slate-500 font-semibold">度</span>
-                                {ex2Correct && <span className="text-emerald-600 font-bold animate-fade-in flex items-center"><svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg> 答對了！</span>}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {ex1Correct && ex2Correct && (
-                        <div className="mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-8 rounded-2xl text-center shadow-xl transform transition-all animate-fade-in relative overflow-hidden">
-                            <div className="absolute inset-0 bg-white opacity-10 pattern-dots pointer-events-none"></div>
-                            <h3 className="text-3xl font-bold mb-3 relative z-10">🎉 恭喜你完成探索！</h3>
-                            <p className="text-indigo-100 text-lg relative z-10">你已經成功掌握了餘弦定理的推導過程與實務應用，這是解決測量與幾何問題的重要工具。</p>
-                        </div>
-                    )}
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm">
+              <h3 className="mb-3 text-lg font-bold text-indigo-900">1. 邊長公式的變形（求任一邊）</h3>
+              <p className="mb-4 text-slate-600">若想求其他邊（如邊 b 或邊 a），只要對調對應的字母與夾角即可：</p>
+              <div className="grid gap-4 md:grid-cols-2 font-mono text-base">
+                <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
+                  <span className="text-xs font-sans font-bold text-indigo-600 block mb-1">求邊 b</span>
+                  b² = a² + c² − 2ac cos B<br/>
+                  <span className="text-xs font-sans text-slate-500 font-normal">（求出 b² 後再開根號得 b）</span>
                 </div>
-            );
-        }
-
-        // --- Main App Component ---
-        const App = () => {
-            const [step, setStep] = useState(0);
-            const steps = [
-                "1. 建立坐標系",
-                "2. 距離公式",
-                "3. 展開與化簡",
-                "4. 概念穩固"
-            ];
-
-            return (
-                <div className="min-h-screen p-4 md:p-8 flex items-center justify-center">
-                    <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-                        {/* Header */}
-                        <div className="bg-slate-900 p-8 text-white text-center relative overflow-hidden">
-                            <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
-                            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
-                            <h1 className="text-3xl md:text-4xl font-extrabold mb-3 relative z-10 tracking-tight">餘弦定理互動探索</h1>
-                            <p className="text-slate-300 relative z-10 font-medium text-lg">跟著步驟，一步步推導並應用《泰宇 正餘弦定理》</p>
-                        </div>
-                        
-                        {/* Progress Tracker */}
-                        <div className="flex border-b border-slate-200 bg-slate-50 overflow-x-auto hide-scrollbar">
-                            {steps.map((s, i) => (
-                                <button 
-                                    key={i} 
-                                    onClick={() => setStep(i)}
-                                    className={`flex-1 min-w-[140px] px-4 py-4 text-sm font-bold transition-all border-b-4 outline-none ${step === i ? 'bg-white text-indigo-600 border-indigo-600 shadow-sm' : 'text-slate-400 border-transparent hover:bg-slate-100 hover:text-slate-600'}`}>
-                                    {s}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Content Area */}
-                        <div className="p-6 md:p-10 min-h-[450px]">
-                            {step === 0 && <Step1 />}
-                            {step === 1 && <Step2 />}
-                            {step === 2 && <Step3 />}
-                            {step === 3 && <Step4 />}
-                        </div>
-
-                        {/* Navigation Footer */}
-                        <div className="bg-slate-50 p-6 flex justify-between border-t border-slate-200">
-                            <button 
-                                onClick={() => setStep(s => Math.max(0, s - 1))}
-                                disabled={step === 0}
-                                className={`px-6 py-3 rounded-xl font-bold transition-all ${step === 0 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100 active:scale-95'}`}>
-                                上一步
-                            </button>
-                            <button 
-                                onClick={() => setStep(s => Math.min(3, s + 1))}
-                                disabled={step === 3}
-                                className={`px-6 py-3 rounded-xl font-bold transition-all shadow-md ${step === 3 ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 hover:shadow-lg'}`}>
-                                下一步
-                            </button>
-                        </div>
-                    </div>
+                <div className="rounded-xl bg-slate-50 p-4 border border-slate-200">
+                  <span className="text-xs font-sans font-bold text-indigo-600 block mb-1">求邊 a</span>
+                  a² = b² + c² − 2bc cos A
                 </div>
-            );
-        }
+              </div>
+            </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+            <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-sm">
+              <h3 className="mb-3 text-lg font-bold text-pink-900">2. 角度公式的互動推導（由三邊求角 cos A）</h3>
+              <p className="mb-4 text-slate-600">請試著跟著下方步驟，一步步推導出 <span className="font-mono text-pink-600 font-bold">cos A</span>：</p>
+              
+              <div className="space-y-5 font-mono text-sm md:text-base text-slate-700 bg-slate-50 p-5 rounded-xl border border-slate-200">
+                <div className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-100 text-pink-700 text-xs font-sans font-bold flex items-center justify-center mt-0.5">①</span>
+                  <div>
+                    <span className="font-sans font-bold text-slate-800">從以角 A 對應邊 a 的餘弦定理出發：</span>
+                    <div className="mt-1 font-bold text-indigo-900">a² = b² + c² − 2bc cos A</div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 border-t border-slate-200 pt-4">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-100 text-pink-700 text-xs font-sans font-bold flex items-center justify-center mt-0.5">②</span>
+                  <div className="w-full">
+                    <span className="font-sans font-bold text-slate-800 block mb-2">移項：將含有 cos A 的負項移到左邊變成正的，並將 a² 移到右邊，會變成？</span>
+                    <div className="space-y-2 font-sans text-sm">
+                      <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition ${step2Choice === 'wrong1' ? 'bg-rose-50 border-rose-300' : 'bg-white border-slate-200 hover:bg-slate-100'}`}>
+                        <input type="radio" name="step2" value="wrong1" checked={step2Choice === 'wrong1'} onChange={e => setStep2Choice(e.target.value)} />
+                        <span className="font-mono">2bc cos A = a² − b² − c²</span>
+                      </label>
+                      <label className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition ${step2Choice === '2bc_cosA' ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-slate-200 hover:bg-slate-100'}`}>
+                        <input type="radio" name="step2" value="2bc_cosA" checked={step2Choice === '2bc_cosA'} onChange={e => setStep2Choice(e.target.value)} />
+                        <span className="font-mono">2bc cos A = b² + c² − a²</span>
+                      </label>
+                    </div>
+                    {step2Choice === '2bc_cosA' && <SuccessMessage>正確！成功把未知數移到左邊。</SuccessMessage>}
+                    {step2Choice === 'wrong1' && <HintMessage>再檢查一次正負號：原本是 −2bc cos A，移項過去變正號喔！</HintMessage>}
+                  </div>
+                </div>
+
+                {step2Correct && (
+                  <div className="flex items-start gap-3 border-t border-slate-200 pt-4 animate-fade-in">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-pink-100 text-pink-700 text-xs font-sans font-bold flex items-center justify-center mt-0.5">③</span>
+                    <div className="w-full">
+                      <span className="font-sans font-bold text-slate-800 block mb-2">最後一步：為了單獨求出 cos A，等號兩邊該怎麼處理？</span>
+                      <div className="space-y-3 font-sans text-sm">
+                        <label className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition ${step3Choice === 'divided_by_2bc' ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-slate-200 hover:bg-slate-100'}`}>
+                          <input type="radio" name="step3" value="divided_by_2bc" checked={step3Choice === 'divided_by_2bc'} onChange={e => setStep3Choice(e.target.value)} />
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span>兩邊同除以 2bc，得到</span>
+                            <span className="font-mono font-bold">cos A =</span>
+                            <span className="fraction font-mono font-bold">
+                              <span className="num">b² + c² − a²</span>
+                              <span className="den">2bc</span>
+                            </span>
+                          </div>
+                        </label>
+                        <label className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition ${step3Choice === 'wrong2' ? 'bg-rose-50 border-rose-300' : 'bg-white border-slate-200 hover:bg-slate-100'}`}>
+                          <input type="radio" name="step3" value="wrong2" checked={step3Choice === 'wrong2'} onChange={e => setStep3Choice(e.target.value)} />
+                          <span>兩邊同減去 2bc</span>
+                        </label>
+                      </div>
+                      {step3Choice === 'divided_by_2bc' && (
+                        <div className="mt-5 p-6 bg-emerald-50 border-2 border-emerald-200 rounded-2xl text-emerald-900 font-sans text-center animate-fade-in shadow-sm">
+                          <p className="font-bold text-lg mb-3">🎉 太棒了！你已經成功完整推導出求角的餘弦定理公式：</p>
+                          <div className="inline-flex items-center gap-3 bg-white px-8 py-4 rounded-xl border border-emerald-300 font-mono text-2xl font-bold text-emerald-800 shadow-sm">
+                            <span>cos A =</span>
+                            <span className="fraction">
+                              <span className="num">b² + c² − a²</span>
+                              <span className="den">2bc</span>
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {step3Choice === 'wrong2' && <HintMessage>2bc 與 cos A 之間是相乘關係，要消掉相乘需要用「除法」喔！</HintMessage>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Step 5: Exercises with relaxed number validation
+    const Step5 = () => {
+      const [ex1Ans, setEx1Ans] = useState('');
+      const [ex2Ans, setEx2Ans] = useState('');
+      const [showEx1Hint, setShowEx1Hint] = useState(false);
+      const [showEx2Hint, setShowEx2Hint] = useState(false);
+
+      const num1 = Number(ex1Ans.trim());
+      const num2 = Number(ex2Ans.trim());
+
+      const ex1Correct = ex1Ans.trim() !== '' && !isNaN(num1) && num1 === 12;
+      const ex2Correct = ex2Ans.trim() !== '' && !isNaN(num2) && num2 === 120;
+      const ex1Wrong = ex1Ans.trim() !== '' && !ex1Correct;
+      const ex2Wrong = ex2Ans.trim() !== '' && !ex2Correct;
+
+      return (
+        <div className="animate-fade-in">
+          <StepHeading number="5">概念穩固：互動習題</StepHeading>
+          <div className="mb-7 flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-5 text-slate-600 shadow-sm">
+            <span className="rounded-lg bg-indigo-100 p-2 text-lg text-indigo-700" aria-hidden="true">i</span>
+            <div>
+              <p className="mb-1 font-semibold text-slate-800">公式運用提醒</p>
+              <div className="text-sm leading-7 flex flex-col gap-1">
+                <div>求邊長 b：<span className="font-mono bg-slate-100 px-2 py-0.5 rounded">b² = a² + c² − 2ac cos B</span>，求出 b² 後再開平方根。</div>
+                <div className="flex items-center gap-1">
+                  <span>求角 A：</span>
+                  <span className="font-mono bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
+                    <span>cos A =</span>
+                    <span className="fraction text-xs">
+                      <span className="num">b² + c² − a²</span>
+                      <span className="den">2bc</span>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Exercise A */}
+            <section className={`rounded-2xl border-2 p-5 transition-all md:p-6 ${ex1Correct ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-white shadow-sm'}`} aria-labelledby="exercise-a-title">
+              <h3 id="exercise-a-title" className="mb-4 flex items-center text-lg font-bold text-slate-800">
+                <span className="mr-3 flex h-7 w-7 items-center justify-center rounded-md bg-sky-500 text-sm text-white">A</span>
+                已知兩邊一夾角（SAS）
+              </h3>
+              <p className="mb-4 border-l-4 border-sky-300 pl-3 text-sm leading-6 text-slate-600">
+                <span className="mb-1 block text-xs font-bold text-sky-700">課本動動筆 4</span>
+                在 △ABC 中，已知 a = 4、c = 2，且 ∠B = 60°。求 b² 的值。<br />
+                <span className="mt-1 inline-block text-slate-500">提示：cos 60° = 1/2。</span>
+              </p>
+
+              <div className="mb-4">
+                {!showEx1Hint ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowEx1Hint(true)}
+                    className="w-full py-2.5 px-4 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 text-sm font-bold hover:bg-sky-100 transition shadow-sm"
+                  >
+                    🔒 點擊揭開計算步驟與提示
+                  </button>
+                ) : (
+                  <div className="mb-5 rounded-xl border border-sky-100 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-600 animate-fade-in">
+                    <p className="font-bold text-xs text-sky-700 mb-1 font-sans">解題步驟：</p>
+                    b² = a² + c² − 2ac cos B<br />
+                    b² = 4² + 2² − 2(4)(2)(1/2)
+                    <button
+                      type="button"
+                      onClick={() => setShowEx1Hint(false)}
+                      className="mt-2 block text-xs text-slate-400 hover:text-slate-600 underline font-sans"
+                    >
+                      隱藏步驟
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-2 flex flex-wrap items-center gap-3">
+                <label htmlFor="exercise-a-answer" className="text-lg font-bold text-slate-700">b² =</label>
+                <input id="exercise-a-answer" type="number" inputMode="decimal" value={ex1Ans} onChange={e => setEx1Ans(e.target.value)} className="w-28 rounded-lg border-2 border-slate-300 p-2 text-center font-bold text-slate-800 focus:border-sky-500" placeholder="答案" />
+              </div>
+              {ex1Correct && <SuccessMessage>正確！b² = 12，所以 b = 2√3。</SuccessMessage>}
+              {ex1Wrong && <HintMessage>再算一次：16 + 4 − 2 × 4 × 2 × 1/2。注意最後一項的減號。</HintMessage>}
+              
+              <div className="mt-5 flex justify-center rounded-xl border border-slate-100 bg-slate-50 p-4">
+                <svg viewBox="0 0 220 145" className="w-full max-w-[260px]" role="img" aria-label="習題 A 三角形示意圖，角 B 為 60 度">
+                  <polygon points="25,120 70,35 195,120" fill="rgba(14,165,233,.10)" stroke="#0ea5e9" strokeWidth="2.5" strokeLinejoin="round" />
+                  <path d="M 47 120 A 22 22 0 0 0 40 100" fill="none" stroke="#0ea5e9" strokeWidth="2.5" />
+                  <text x="46" y="106" fontSize="11" fontWeight="700" fill="#0369a1">60°</text>
+                  <text x="10" y="132" fontSize="13" fontWeight="700" fill="#334155">B</text>
+                  <text x="66" y="24" fontSize="13" fontWeight="700" fill="#334155">A</text>
+                  <text x="202" y="132" fontSize="13" fontWeight="700" fill="#334155">C</text>
+                  <text x="22" y="75" fontSize="12" fontWeight="700" fill="#0284c7">c = 2</text>
+                  <text x="105" y="137" fontSize="12" fontWeight="700" fill="#0284c7">a = 4</text>
+                  <text x="135" y="72" fontSize="12" fontWeight="700" fill="#db2777">b = ?</text>
+                </svg>
+              </div>
+            </section>
+
+            {/* Exercise B */}
+            <section className={`rounded-2xl border-2 p-5 transition-all md:p-6 ${ex2Correct ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-white shadow-sm'}`} aria-labelledby="exercise-b-title">
+              <h3 id="exercise-b-title" className="mb-4 flex items-center text-lg font-bold text-slate-800">
+                <span className="mr-3 flex h-7 w-7 items-center justify-center rounded-md bg-pink-500 text-sm text-white">B</span>
+                已知三邊長求角度（SSS）
+              </h3>
+              <p className="mb-4 border-l-4 border-pink-300 pl-3 text-sm leading-6 text-slate-600">
+                <span className="mb-1 block text-xs font-bold text-pink-700">課本例題 6</span>
+                在 △ABC 中，已知 a = 7、b = 5、c = 3。求最大角 ∠A 的度數。
+              </p>
+
+              <div className="mb-4">
+                {!showEx2Hint ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowEx2Hint(true)}
+                    className="w-full py-2.5 px-4 rounded-xl border border-pink-200 bg-pink-50 text-pink-700 text-sm font-bold hover:bg-pink-100 transition shadow-sm"
+                  >
+                    🔒 點擊揭開計算步驟與提示
+                  </button>
+                ) : (
+                  <div className="mb-5 rounded-xl border border-pink-100 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-600 animate-fade-in">
+                    <p className="font-bold text-xs text-pink-700 mb-1 font-sans">解題步驟：</p>
+                    <div className="flex items-center gap-1 font-mono">
+                      <span>cos A =</span>
+                      <span className="fraction">
+                        <span className="num">5² + 3² − 7²</span>
+                        <span className="den">2(5)(3)</span>
+                      </span>
+                      <span>= −1/2</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowEx2Hint(false)}
+                      className="mt-2 block text-xs text-slate-400 hover:text-slate-600 underline font-sans"
+                    >
+                      隱藏步驟
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-2 flex flex-wrap items-center gap-3">
+                <label htmlFor="exercise-b-answer" className="text-lg font-bold text-slate-700">∠A =</label>
+                <input id="exercise-b-answer" type="number" inputMode="decimal" value={ex2Ans} onChange={e => setEx2Ans(e.target.value)} className="w-28 rounded-lg border-2 border-slate-300 p-2 text-center font-bold text-slate-800 focus:border-pink-500" placeholder="角度" />
+                <span className="font-semibold text-slate-500">度</span>
+              </div>
+              {ex2Correct && <SuccessMessage>答對了！cos A = −1/2，因此 ∠A = 120°。</SuccessMessage>}
+              {ex2Wrong && <HintMessage>請回想特殊角的餘弦值：cos 60° = 1/2，而此題的餘弦值是負數。</HintMessage>}
+
+              <div className="mt-5 flex justify-center rounded-xl border border-slate-100 bg-slate-50 p-4">
+                <svg viewBox="0 0 280 160" className="w-full max-w-[280px]" role="img" aria-label="習題 B 大尺寸示意圖，角 A 為鈍角">
+                  <polygon points="35,130 90,65 245,130" fill="rgba(236,72,153,.10)" stroke="#ec4899" strokeWidth="2.5" strokeLinejoin="round" />
+                  
+                  <path d="M 72 86 A 25 25 0 0 0 115 75" fill="none" stroke="#ec4899" strokeWidth="2.5" />
+                  <text x="100" y="102" fontSize="13" fontWeight="700" fill="#db2777">A = ?</text>
+                  
+                  <text x="15" y="142" fontSize="13" fontWeight="700" fill="#334155">B</text>
+                  <text x="252" y="142" fontSize="13" fontWeight="700" fill="#334155">C</text>
+                  <text x="85" y="52" fontSize="14" fontWeight="700" fill="#334155">A</text>
+
+                  <text x="36" y="90" fontSize="12" fontWeight="700" fill="#475569">c = 3</text>
+                  <text x="168" y="90" fontSize="12" fontWeight="700" fill="#475569">b = 5</text>
+                  <text x="130" y="148" fontSize="13" fontWeight="700" fill="#475569">a = 7</text>
+                </svg>
+              </div>
+            </section>
+          </div>
+
+          {ex1Correct && ex2Correct && (
+            <div className="mt-8 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 p-7 text-center text-white shadow-lg animate-fade-in">
+              <h3 className="mb-3 text-2xl font-bold">🎉 恭喜你完成探索！</h3>
+              <p className="leading-7 text-indigo-100">你已經練習了餘弦定理的推導與應用：既可以由兩邊和夾角求第三邊，也可以由三邊求角度。</p>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const App = () => {
+      const [step, setStep] = useState(0);
+      const steps = ['0. 思考引導', '1. 建立坐標系', '2. 距離公式', '3. 展開與化簡', '4. 公式變形推導', '5. 概念穩固'];
+      const StepComponents = [Step0, Step1, Step2, Step3, Step4, Step5];
+      const CurrentStep = StepComponents[step];
+
+      return (
+        <main className="min-h-screen p-3 md:p-8">
+          <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl">
+            <header className="relative overflow-hidden bg-slate-900 p-7 text-center text-white md:p-9">
+              <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-indigo-500 opacity-30 blur-3xl"></div>
+              <div className="absolute -bottom-24 -left-20 h-64 w-64 rounded-full bg-pink-500 opacity-30 blur-3xl"></div>
+              <h1 className="relative z-10 mb-3 text-3xl font-extrabold tracking-tight md:text-4xl">餘弦定理互動探索</h1>
+            </header>
+
+            <nav aria-label="活動步驟" className="flex overflow-x-auto border-b border-slate-200 bg-slate-50">
+              {steps.map((label, index) => (
+                <button key={label} type="button" onClick={() => setStep(index)} aria-current={step === index ? 'step' : undefined}
+                  className={`min-w-[120px] flex-1 border-b-4 px-3 py-4 text-sm font-bold transition ${step === index ? 'border-indigo-600 bg-white text-indigo-700' : 'border-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
+                  {label}
+                </button>
+              ))}
+            </nav>
+
+            <section className="min-h-[470px] p-5 md:p-9" aria-live="polite">
+              <CurrentStep key={step} />
+            </section>
+
+            <footer className="flex items-center justify-between border-t border-slate-200 bg-slate-50 p-5 md:p-6">
+              <button type="button" onClick={() => setStep(current => Math.max(0, current - 1))} disabled={step === 0}
+                className={`rounded-xl px-5 py-3 font-bold transition ${step === 0 ? 'cursor-not-allowed bg-slate-200 text-slate-400' : 'border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}`}>
+                上一步
+              </button>
+              <span className="text-sm text-slate-500">第 {step + 1} / 6 步</span>
+              <button type="button" onClick={() => setStep(current => Math.min(5, current + 1))} disabled={step === 5}
+                className={`rounded-xl px-5 py-3 font-bold shadow-sm transition ${step === 5 ? 'cursor-not-allowed bg-slate-200 text-slate-400 shadow-none' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
+                下一步
+              </button>
+            </footer>
+          </div>
+          <p className="mx-auto mt-4 max-w-5xl px-2 text-center text-xs leading-5 text-slate-500">本活動使用互動選單與輸入欄位，協助學生檢查推導步驟及練習餘弦定理。請使用可連線至網路的瀏覽器開啟此檔案。</p>
+        </main>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
